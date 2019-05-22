@@ -18,7 +18,12 @@
                 <div class="col-sm-2" v-if="tarefa">
                     <div class="form-group">
                         <label>Tarefa concluída?</label>
-                        <button class="btn btn-secondary btn-sm d-block">
+                        <button
+                            type="button"
+                            class="btn btn-sm d-block"
+                            :class="claseBtn"
+                            @click="tarefaLocal.concluido = !tarefaLocal.concluido"
+                        >
                             <i class="fa fa-check"></i>
                         </button>
                     </div>
@@ -43,19 +48,31 @@ export default {
             tarefaLocal: Object.assign(
                 {}, 
                 { titulo: '', concluido: false }, 
-                this.tarefa)
+                this.tarefa
+            )
         }
     },
     computed: {
+        claseBtn(){
+            return this.tarefa && this.tarefaLocal.concluido
+                ? 'btn-success' 
+                : 'btn-secondary'
+        },
         classeColuna() {
             return this.tarefa 
                 ? 'col-sm-10'
                 : 'col-sm-12'
+        }        
+    },
+    watch: {
+        tarefa(tarefaNova, tarefaAntiga){
+            this.tarefaLocal = Object.assign({}, this.tarefa )
         }
     },
     methods: {
         salvar( event ){
-            this.$emit('criar', this.tarefaLocal)
+            const operacion = !this.tarefa ? 'criar' : 'editar'
+            this.$emit(operacion, this.tarefaLocal)
             this.tarefaLocal = { titulo: '', concluido: false }
         }
     }

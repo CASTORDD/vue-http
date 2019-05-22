@@ -16,7 +16,7 @@
             </div>
         </div>
 
-        <ul class="list-group" v-if="tarefas.length > 0">
+        <ul class="list-group" v-if="tarefasOrdenadas.length > 0">
             <TarefasListaIten
                 v-for="tarefa in tarefasOrdenadas"
                 :key="tarefa.id"
@@ -27,7 +27,12 @@
             />
         </ul>
 
-        <p v-else>Nenhuma tarefa criada.</p>
+        <p v-else-if="!mensagemErro">Nenhuma tarefa criada.</p>
+
+        <div 
+            class="alert alert-danger"
+            v-else
+        >{{ mensagemErro }}</div>
 
         <TarefaSalvar 
             v-if="exibirFormulario"
@@ -40,12 +45,10 @@
 </template>
 
 <script>
-import axios from 'axios'
-
-import config from '../config/config'
+import axios from './../config/axios'
 import TarefaSalvar from './TarefaSalvar.vue'
 import TarefasListaIten from './TarefasListaIten.vue'
-import { timeout } from 'q';
+import { timeout, Promise } from 'q';
 import { setTimeout } from 'timers';
 
 export default {
@@ -57,7 +60,8 @@ export default {
         return {
             tarefas: [],
             exibirFormulario: false,
-            tarefaSeleccionada: undefined
+            tarefaSeleccionada: undefined,
+            mensagemErro: undefined
 
         }
     },
@@ -76,15 +80,34 @@ export default {
         }
     },
     created(){
-        axios.get(`${config.apiURL}/tarefas`)
+        axios.get(`/tarefas`)
             .then((response) => {
                 console.log('GET/tarefas', response)
                 this.tarefas = response.data
+                return 'AXIOS'
+                }, 
+                error => {
+                    console.log('error capturado no then:', error)
+                    return Promise.reject(error)
+                })
+            .catch(error => {
+                console.log('error capturado no then:', error)
+                if(error.response){
+                    this.mensagemErro = `Servidor retorno com error: ${error.message} ${error.response.statusText}`
+                    console.log('Error [resposta]:', error.response)
+                } else if (error.request) {
+                    this.mensagemErro = `Erro ao tratar comunicar com o servidor: ${error.message}`
+                    console.log('Error [requisicao]: ', error.request)
+                } else {
+                    this.mensagemErro = 'Error ao fazer requisicao ao servidor: ${error.message}'
+                }
+            }).then((algumParametro) => {
+                console.log('sempre executado!', algumParametro)
             })
     },
     methods: {
         criarTarefa( tarefa ){
-            // axios.post(`${config.apiURL}/tarefas`, tarefa )
+            // axios.post(`/tarefas`, tarefa )
             //     .then((response) => {
             //         console.log('POST/tarefas', response)
             //         this.tarefas.push(response.data)
@@ -101,8 +124,7 @@ export default {
                 .then((response) => {
                     console.log('POST/tarefas', response)
                     this.tarefas.push(response.data)
-                    setTimeout( this.resetar(), 300 )
-                    
+                    setTimeout( this.resetar(), 300 )                    
                 })
         },
         exibirFormCriarTarea( event ){
@@ -124,7 +146,7 @@ export default {
         },
         editarTarefa( tarefa ){
             console.log('editar:', tarefa)
-            axios.put(`${config.apiURL}/tarefas/${tarefa.id}`, tarefa)
+            axios.put(`/tarefas/${tarefa.id}`, tarefa)
                 .then( response => {
                     console.log(`PUT/${tarefa.id}`, response)
                     const indice = this.tarefas.findIndex( t => t.id === tarefa.id )
@@ -135,7 +157,7 @@ export default {
         deletarTarefa( tarefa ){
             const confirmar = window.confirm(`Deseja deletar a tarefa "${tarefa.titulo}"?`)
             if(confirmar){
-                axios.delete(`${config.apiURL}/tarefas/${tarefa.id}`)
+                axios.delete(`/tarefas/${tarefa.id}`)
                     .then(response => {
                         console.log(`DELETE /tarefas/${tarefa.id}`, response)
                         const indice = this.tarefas.findIndex( t => t.id === tarefa.id )

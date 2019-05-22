@@ -17,18 +17,13 @@
     },
     {
       "titulo": "Aprender Vuex",
-      "concluido": false,
+      "concluido": true,
       "id": 4
     },
     {
-      "titulo": "Nueva formula",
+      "titulo": "test axios",
       "concluido": false,
       "id": 5
-    },
-    {
-      "titulo": "Aprender Vuetify",
-      "concluido": false,
-      "id": 6
     }
   ]
 }
